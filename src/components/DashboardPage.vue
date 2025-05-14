@@ -257,6 +257,7 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 button:hover {
@@ -267,6 +268,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  font-family: Arial, sans-serif;
 }
 
 th, td {
@@ -277,6 +279,41 @@ th, td {
 
 th {
   background-color: #f0f0f0;
+  font-weight: 600;
+}
+
+/* Enhanced action column styling */
+td:last-child {
+  width: 150px; /* Fixed width for action column */
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.action-buttons button {
+  margin-bottom: 0;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  min-width: 60px;
+}
+
+.action-buttons button:first-child {
+  background-color: #4a89dc; /* Blue for edit */
+}
+
+.action-buttons button:first-child:hover {
+  background-color: #3a70c2;
+}
+
+.action-buttons button:last-child {
+  background-color: #e9573f; /* Red for delete */
+}
+
+.action-buttons button:last-child:hover {
+  background-color: #d2341a;
 }
 
 /* Modal styles */
@@ -286,8 +323,8 @@ th {
   left: 0;
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(8px); /* Blurred background */
-  background-color: rgba(0, 0, 0, 0.4); /* Dark overlay */
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -357,12 +394,6 @@ th {
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap; /* Optional: Allows wrapping if too narrow */
 }
 
 input[type="date"],
