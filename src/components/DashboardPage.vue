@@ -4,81 +4,112 @@
       <h1 class="page-title">📋 Entry Dashboard</h1>
     </div>
 
-    <!-- Add Button -->
-    <div class="button-container">
-      <button @click="startAdd">Add Entry</button>
+    <div class="toolbar">
+      <button class="btn btn-primary" @click="startAdd">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add Entry
+      </button>
+
+      <div class="controls">
+        <!-- Search Input -->
+        <div class="control-group">
+          <input type="text" v-model="searchQuery" placeholder="Search..." class="search-input">
+        </div>
+
+        <!-- Floor Filter -->
+        <div class="control-group">
+          <select v-model="selectedFloorLv" class="select-input">
+            <option value="">All Floors</option>
+            <option v-for="level in floorLevels" :key="level" :value="level">Floor {{ level }}</option>
+          </select>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="control-group">
+          <input type="date" v-model="selectedDate" class="date-input">
+        </div>
+
+        <!-- Clear Filters Button -->
+        <button 
+          class="btn btn-secondary" 
+          @click="clearFilters"
+          :disabled="!hasActiveFilters"
+        >
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+          Clear Filters
+        </button>
+      </div>
     </div>
 
-    <!-- Search and Sort Controls -->
-<!-- Add Date Filter in the Controls Section -->
-<div class="controls">
-  <!-- Search -->
-  <div class="control-group">
-    <label for="search">Search:</label>
-    <input type="text" id="search" v-model="searchQuery" placeholder="Search by name or floor..." />
-  </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th @click="sortBy('id')" :class="{ active: sortKey === 'id' }">
+              <span>No</span>
+              <span v-if="sortKey === 'id'" class="sort-icon">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th @click="sortBy('name')" :class="{ active: sortKey === 'name' }">
+              <span>Name</span>
+              <span v-if="sortKey === 'name'" class="sort-icon">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th @click="sortBy('floor')" :class="{ active: sortKey === 'floor' }">
+              <span>Floor</span>
+              <span v-if="sortKey === 'floor'" class="sort-icon">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th @click="sortBy('description')" :class="{ active: sortKey === 'description' }">
+              <span>Description</span>
+              <span v-if="sortKey === 'description'" class="sort-icon">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th @click="sortBy('created_at')" :class="{ active: sortKey === 'created_at' }">
+              <span>Date</span>
+              <span v-if="sortKey === 'created_at'" class="sort-icon">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="filteredEntries.length === 0">
+            <td colspan="6" class="empty-state">
+              <div class="empty-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+                  <path d="M3 3h18v18H3zM21 9H3M21 15H3"/>
+                </svg>
+                <p>No entries found</p>
+              </div>
+            </td>
+          </tr>
+          <tr v-for="(entry, index) in filteredEntries" :key="entry.id">
+            <td>{{ index + 1 }}</td>
+            <td>{{ entry.name }}</td>
+            <td>{{ entry.floor }}</td>
+            <td>{{ entry.description }}</td>
+            <td>{{ formatDate(entry.created_at) }}</td>
+            <td>
+              <div class="action-buttons">
+                <button @click="editEntry(entry)" class="btn-icon" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button @click="deleteEntry(index)" class="btn-icon danger" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-  <!-- Floor Filter -->
-  <div class="control-group">
-    <label for="floorFilter">Floor:</label>
-    <select v-model="selectedFloorLv" id="floorFilter">
-      <option value="">All</option>
-      <option v-for="level in floorLevels" :key="level" :value="level">{{ level }}</option>
-    </select>
-  </div>
-
-  <!-- Add Date Range Filter -->
-  <!-- <div class="button-container">
-    <label for="startDate">Start Date: </label>
-    <input type="date" v-model="startDate" id="startDate" />
-
-    <label for="endDate">End Date: </label>
-    <input type="date" v-model="endDate" id="endDate" />
-  </div> -->
-
-  <!-- Date Filter -->
-  <div class="control-group">
-    <label for="selectedDate">Date:</label>
-    <input type="date" v-model="selectedDate" id="selectedDate" />
-  </div>
-</div>
-
-    <!-- Entries Table -->
-    <table>
-      <thead>
-        <tr>
-          <th @click="sortBy('id')">No</th>
-          <th @click="sortBy('name')">
-            Name
-            <span v-if="sortKey === 'name'">{{ sortOrder === 'asc' ? '⬆️' : '⬇️' }}</span>
-          </th>
-          <th @click="sortBy('floor')">Floor LV</th>
-          <th @click="sortBy('description')">Description</th>
-          <th @click="sortBy('created_at')">Date</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="filteredEntries.length === 0">
-          <td colspan="6">No entries found for the selected criteria.</td>
-        </tr>
-        <tr v-for="(entry, index) in filteredEntries" :key="entry.id">
-          <td>{{ index + 1 }}</td>
-          <td>{{ entry.name }}</td>
-          <td>{{ entry.floor }}</td>
-          <td>{{ entry.description }}</td>
-          <td>{{ formatDate(entry.created_at) }}</td>
-          <td>
-          <div class="action-buttons">
-            <button @click="editEntry(entry)">Edit</button>
-            <button @click="deleteEntry(index)">Delete</button>
-          </div>
-        </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Modal Overlay -->
     <div v-if="showForm" class="modal-overlay" @click.self="closeForm">
       <div class="modal-content">
         <FormPage
@@ -96,6 +127,7 @@
 import { computed,ref, onMounted } from 'vue'
 import { supabase } from '@/supabase.js' // adjust path if needed
 import FormPage from './FormPage.vue'
+
 
 const entries = ref([])
 const showForm = ref(false)
@@ -242,89 +274,232 @@ const deleteEntry = async (index) => {
     }
   }
 }
+
+// Add this computed property to check if any filters are active
+const hasActiveFilters = computed(() => {
+  return (
+    searchQuery.value !== '' || 
+    selectedFloorLv.value !== '' || 
+    selectedDate.value !== '' ||
+    sortKey.value !== ''
+  );
+});
+
+// Add this method to clear all filters and sorting
+const clearFilters = () => {
+  searchQuery.value = '';
+  selectedFloorLv.value = '';
+  selectedDate.value = '';
+  sortKey.value = '';
+  sortOrder.value = 'asc';
+};
 </script>
 
 <style scoped>
 .dashboard {
   padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-button {
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #1f2937;
   margin-bottom: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
-button:hover {
-  background-color: #369e6f;
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  justify-content: space-between;
+}
+
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.control-group {
+  position: relative;
+}
+
+.search-input,
+.select-input,
+.date-input {
+  padding: 0.625rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background-color: white;
+}
+
+.search-input {
+  min-width: 250px;
+  padding-left: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='M21 21l-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 1rem center;
+  background-size: 1rem;
+}
+
+.search-input:focus,
+.select-input:focus,
+.date-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
-  font-family: Arial, sans-serif;
 }
 
-th, td {
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  text-align: center;
+thead {
+  background-color: #f9fafb;
 }
 
 th {
-  background-color: #f0f0f0;
+  padding: 1rem 1.25rem;
+  text-align: left;
   font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
 }
 
-/* Enhanced action column styling */
-td:last-child {
-  width: 150px; /* Fixed width for action column */
+th:hover {
+  background-color: #f3f4f6;
+}
+
+th.active {
+  color: #3b82f6;
+}
+
+.sort-icon {
+  margin-left: 0.5rem;
+}
+
+td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: #f9fafb;
 }
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.btn-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  background-color: transparent;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.action-buttons button {
-  margin-bottom: 0;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.9rem;
-  min-width: 60px;
+.btn-icon:hover {
+  background-color: #f3f4f6;
+  transform: translateY(-1px);
 }
 
-.action-buttons button:first-child {
-  background-color: #4a89dc; /* Blue for edit */
+.btn-icon.danger:hover {
+  background-color: #fee2e2;
+  border-color: #fee2e2;
+  color: #dc2626;
 }
 
-.action-buttons button:first-child:hover {
-  background-color: #3a70c2;
+.empty-state {
+  padding: 3rem;
+  text-align: center;
 }
 
-.action-buttons button:last-child {
-  background-color: #e9573f; /* Red for delete */
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
-.action-buttons button:last-child:hover {
-  background-color: #d2341a;
+.empty-state p {
+  color: #6b7280;
+  font-size: 1rem;
 }
 
-/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(8px);
-  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -334,73 +509,79 @@ td:last-child {
 .modal-content {
   background: white;
   padding: 2rem;
-  border-radius: 10px;
-  min-width: 300px;
+  border-radius: 12px;
+  width: 100%;
   max-width: 500px;
-  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: modalFadeIn 0.3s ease-out;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 1rem;
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.button-container {
-  text-align: center;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-family: 'Arial', sans-serif;
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .controls {
+    flex-direction: column;
+  }
+  
+  .search-input,
+  .select-input,
+  .date-input {
+    width: 100%;
+  }
 }
 
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary:disabled:hover {
+  background-color: #f3f4f6;
+}
+
+/* Adjust controls spacing to accommodate new button */
 .controls {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: flex-start;
-  align-items: flex-end;
-  margin-bottom: 1.5rem;
+  align-items: center;
 }
 
-.control-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 150px;
-}
-
-.control-group label {
-  font-weight: bold;
-  margin-bottom: 0.3rem;
-  font-size: 0.9rem;
-}
-
-.controls input,
-.controls select {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-input[type="date"],
-input[type="text"],
-select {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+/* Make sure controls take full width on mobile */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn-secondary {
+    width: 100%;
+  }
 }
 </style>
